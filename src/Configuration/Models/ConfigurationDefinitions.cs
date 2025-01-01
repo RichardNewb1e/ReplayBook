@@ -53,7 +53,9 @@ public enum ApplicationLanguage
     Es = 8,
     Fr = 16,
     Pt = 32,
-    ZhHant = 64
+    ZhHant = 64,
+    Tr = 128,
+    Ru = 256
 }
 
 /// <summary>
@@ -81,7 +83,9 @@ public static class ConfigurationDefinitions
         { "Español", 8 },
         { "Français", 16 },
         { "Português (Brasil)", 32 },
-        { "繁體中文", 64 }
+        { "繁體中文", 64 },
+        { "Türkçe", 128 },
+        { "русский", 256 }
     };
 
     /// <summary>
@@ -101,6 +105,8 @@ public static class ConfigurationDefinitions
             ApplicationLanguage.Fr => 4,
             ApplicationLanguage.Pt => 5,
             ApplicationLanguage.ZhHant => 6,
+            ApplicationLanguage.Tr => 7,
+            ApplicationLanguage.Ru => 8,
             _ => throw new NotImplementedException()
         };
     }
@@ -121,6 +127,8 @@ public static class ConfigurationDefinitions
             ApplicationLanguage.Es => "es_ES",
             ApplicationLanguage.Fr => "fr_FR",
             ApplicationLanguage.Pt => "pt_BR",
+            ApplicationLanguage.Tr => "tr_TR",
+            ApplicationLanguage.Ru => "ru_RU",
             _ => "en_US",
         };
     }
@@ -160,7 +168,7 @@ public static class ConfigurationDefinitions
             "es_AR" => LeagueLocale.SpanishAR,
             "id_ID" => LeagueLocale.Indonesian,
             "th_TH" => LeagueLocale.Thai,
-            "vn_VN" => LeagueLocale.Vietnamese,
+            "vi_VN" => LeagueLocale.Vietnamese,
             "zh_MY" => LeagueLocale.ChineseMY,
             _ => throw new ArgumentException($"locale not found {name}"),
         };
@@ -200,7 +208,7 @@ public static class ConfigurationDefinitions
             LeagueLocale.SpanishAR => "es_AR",
             LeagueLocale.Indonesian => "id_ID",
             LeagueLocale.Thai => "th_TH",
-            LeagueLocale.Vietnamese => "vn_VN",
+            LeagueLocale.Vietnamese => "vi_VN",
             LeagueLocale.ChineseMY => "zh_MY",
             LeagueLocale.Custom => "Custom",
             _ => "en_US",

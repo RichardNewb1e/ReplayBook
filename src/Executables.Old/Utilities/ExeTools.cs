@@ -14,8 +14,8 @@ namespace Fraxiinus.ReplayBook.Executables.Old.Utilities
             return !string.IsNullOrEmpty(filePath)
                 && filePath.Contains("League of Legends.exe")
                 && File.Exists(filePath)
-                && FileVersionInfo.GetVersionInfo(filePath).FileDescription
-                        .Equals(@"League of Legends (TM) Client", StringComparison.OrdinalIgnoreCase);
+                && FileVersionInfo.GetVersionInfo(filePath).FileDescription?
+                    .Equals(@"League of Legends (TM) Client", StringComparison.OrdinalIgnoreCase) == true;
         }
 
         public static string GetLeagueVersion(string filePath)
@@ -48,7 +48,8 @@ namespace Fraxiinus.ReplayBook.Executables.Old.Utilities
             };
 
             newExe.Name = $"Patch {newExe.PatchNumber.VersionSubstring()}";
-            newExe.LaunchArguments = $"\"-GameBaseDir={newExe.StartFolder}\"" +
+            // The GameBaseDir value needs to be set to the parent folder so the game can find user config files
+            newExe.LaunchArguments = $"\"-GameBaseDir={Directory.GetParent(newExe.StartFolder).FullName}\"" +
                                         " \"-SkipRads\"" +
                                         " \"-SkipBuild\"" +
                                         " \"-EnableLNP\"" +

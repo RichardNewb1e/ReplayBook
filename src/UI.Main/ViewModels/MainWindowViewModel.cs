@@ -14,6 +14,7 @@ using Fraxiinus.ReplayBook.UI.Main.Models;
 using Fraxiinus.ReplayBook.UI.Main.Models.View;
 using Fraxiinus.ReplayBook.UI.Main.Utilities;
 using Fraxiinus.ReplayBook.UI.Main.Views;
+using Fraxiinus.Rofl.Extract.Data.Models;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -230,6 +231,7 @@ public class MainWindowViewModel
     {
         _log.Information("Loading thumbnails for players...");
         if (replay == null) { throw new ArgumentNullException(nameof(replay)); }
+        if (replay.IsErrorReplay) { return; } // TODO
 
         var patchVersion = replay.GameVersion.VersionSubstring();
         var allPlayers = new List<PlayerPreview>();
@@ -316,6 +318,8 @@ public class MainWindowViewModel
         // Look through all replays to get all players
         foreach (ReplayPreview replay in PreviewReplays)
         {
+            if (replay.IsErrorReplay) { continue; } // TODO
+
             IEnumerable<PlayerPreview> allPlayers = replay.BluePreviewPlayers != null
                 ? replay.BluePreviewPlayers.Union(replay.RedPreviewPlayers)
                 : replay.RedPreviewPlayers;
@@ -379,8 +383,8 @@ public class MainWindowViewModel
 
         await Task.Run(() => _fileManager.PruneDatabaseEntries());
 
-        // Discover and load replays into database
-        IEnumerable<FileErrorResult> results = await _fileManager.InitialLoadAsync().ConfigureAwait(true);
+        // Discover and load replays into database, results are files that failed to load
+        _ = await _fileManager.InitialLoadAsync().ConfigureAwait(true);
 
         // Load from database into our viewmodel
         int searchResults = -1;
@@ -399,17 +403,7 @@ public class MainWindowViewModel
 
         if (searchResults == -1)
         {
-            if (results.Any())
-            {
-                StatusBarModel.ShowProgressBar = false;
-                StatusBarModel.ShowDismissButton = true;
-                StatusBarModel.Errors = results;
-                StatusBarModel.StatusMessage = $"{results.Count()} {Application.Current.TryFindResource("LoadingMessageErrors")}";
-            }
-            else
-            {
-                StatusBarModel.Visible = false;
-            }
+            StatusBarModel.Visible = false;
         }
         else
         {
@@ -466,6 +460,7 @@ public class MainWindowViewModel
         _log.Information($"Showing Export Dialog...");
 
         if (preview == null) { throw new ArgumentNullException(nameof(preview)); }
+        if (preview.IsErrorReplay) { return; } // TODO
 
         // create transition collection
         var contentTransitions = new ModernWpf.Media.Animation.TransitionCollection
@@ -664,24 +659,31 @@ public class MainWindowViewModel
         FileResult replay = FileResults[preview.Location];
 
         // Ask the file manager to rename the replay
-        string error = _fileManager.RenameReplay(replay, newText);
+        string errorMessage = null;
+        try
+        {
+            string newReplayLocation = _fileManager.RenameReplay(replay, newText);
 
-        // User entered nothing, change message
-        if (error == "{EMPTY ERROR}")
-        {
-            error = Application.Current.TryFindResource("RenameFlyoutEmptyError") as string;
+            preview.DisplayName = Path.GetFileName(newReplayLocation);
+            preview.Location = newReplayLocation;
         }
-        else if (error == "{NOT FOUND ERROR}")
+        catch (Exception ex)
         {
-            error = Application.Current.TryFindResource("RenameFlyoutNotFoundError") as string;
-        }
-        else // Success
-        {
-            // Change the displayed data to the new name
-            preview.DisplayName = newText;
+            if (ex.Message == "{EMPTY ERROR}")
+            {
+                errorMessage = Application.Current.TryFindResource("RenameFlyoutEmptyError") as string;
+            }
+            else if (ex.Message == "{NOT FOUND ERROR}")
+            {
+                errorMessage = Application.Current.TryFindResource("RenameFlyoutNotFoundError") as string;
+            }
+            else
+            {
+                throw;
+            }
         }
 
-        return error;
+        return errorMessage;
     }
 
     public async Task DeleteReplayFile(ReplayPreview preview)
